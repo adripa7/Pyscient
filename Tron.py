@@ -1,7 +1,8 @@
 import tkinter as tk
 import random
 import numpy as np
-import copy 
+import copy
+import random
 
 #################################################################################
 #
@@ -121,10 +122,55 @@ def AfficheScore(Game):
 
 # VOTRE CODE ICI 
 
+
+#fonction qui simule les autres parties// retourne un score
+def SimulationPartie (Game):
+
+    x, y = Game.PlayerX, Game.PlayerY
+    while (True):
+       CL = Cango(Game)
+       if not CL:
+           return (Game.Score)
+       else:
+           choix = CL[random.randrange(len(CL))]  # on choisit une direction possible
+           Game.Grille[x, y] = 2  # laisse la trace de la moto
+           x += choix[0]
+           y += choix[1]
+           Game.PlayerX = x
+           Game.PlayerY = y
+           Game.Score += 1
+
+
+#fonction qui lance les simulations pour trouver le meilleure score // retourne le score total
+def MonteCarlo (Game, nbSimulaions):
+
+    total = 0
+    for i in range(nbSimulaions):
+        SimulGame = Game.copy()
+        total += SimulationPartie(SimulGame)
+    return (total)
+
+#fonction qui détermine le coup à jouer // retourne le coup gagnant
+def nextStep(Game, listecoup):
+    max = 0
+    for elt in listecoup:
+        Gametest = Game.copy()
+        Gametest.PlayerX += elt[0]
+        Gametest.PlayerY += elt[1]
+        sc = MonteCarlo(Gametest, 1000)
+        if sc > max:
+            max = sc
+            stock = elt
+    return (stock)
+
+
+
+
+
+#fonction qui donne les directions possibles// retourne une liste de tuples
 def Cango(Game):
 
     x, y = Game.PlayerX, Game.PlayerY
-
     listcango = []
     if (Game.Grille[x - 1, y] == 0):  # gauche
         listcango.append((-1, 0))
@@ -144,17 +190,28 @@ def Play(Game):
     x,y = Game.PlayerX, Game.PlayerY
     print(x,y)
 
-
     liste = Cango(Game)
     print(liste)
-    """if not liste:
-        return True #partie terminée"""
+    if not liste:
+        return True #partie terminée
+    else:
+        Game.Grille[x, y] = 2  # laisse la trace de la moto
+        step = nextStep(Game, liste)
+        x += step[0]
+        y += step[1]
+        Game.PlayerX = x  # valide le déplacement
+        Game.PlayerY = y  # valide le déplacement
+        Game.Score += 1
+        return False  # la partie continue
 
 
+"""      
+    choix = liste[random.randrange(len(liste))] # on choisit une direction possible
     Game.Grille[x,y] = 2  # laisse la trace de la moto
 
-    y += 1  # on essaye de bouger vers le haut
-
+    x += choix[0]
+    y += choix[1]
+    #y += 1  # on essaye de bouger vers le haut
     v = Game.Grille[x,y]
 
 
@@ -166,6 +223,7 @@ def Play(Game):
        Game.PlayerY = y  # valide le déplacement
        Game.Score += 1
        return False   # la partie continue
+"""
      
 
 ################################################################################
@@ -195,7 +253,6 @@ Window.after(100,Partie)
 Window.mainloop()
       
 
-    
         
 
       
