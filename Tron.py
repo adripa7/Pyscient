@@ -3,6 +3,7 @@ import random
 import numpy as np
 import copy
 import random
+import time
 
 #################################################################################
 #
@@ -122,8 +123,9 @@ def AfficheScore(Game):
 
 # VOTRE CODE ICI 
 
-
 #fonction qui simule les autres parties// retourne un score
+""" Ancienne version de Simulation 
+
 def SimulationPartie (Game):
 
     x, y = Game.PlayerX, Game.PlayerY
@@ -139,17 +141,85 @@ def SimulationPartie (Game):
            Game.PlayerX = x
            Game.PlayerY = y
            Game.Score += 1
+"""
+# Liste des directions :
+# 0 : sur place   1: à gauche  2 : en haut   3: à droite    4: en bas
+
+dx = np.array([0, -1, 0,  1,  0],dtype=np.int8)
+dy = np.array([0,  0, 1,  0, -1],dtype=np.int8)
+
+# scores associés à chaque déplacement
+ds = np.array([0,  1,  1,  1,  1],dtype=np.int8)
 
 
+
+def SimulationPartie (Game,nb):
+
+    # on copie les datas de départ pour créer plusieurs parties en //
+    G = np.tile(Game.Grille, (nb, 1, 1))
+    X = np.tile(Game.PlayerX, nb)
+    Y = np.tile(Game.PlayerY, nb)
+    S = np.tile(Game.Score, nb)
+    I = np.arange(nb)  # 0,1,2,3,4,5...
+    boucle = True
+
+    while (boucle):
+
+
+        LPossibles = np.zeros((nb, 4), dtype=np.int8)
+        Indices = np.zeros(nb, dtype=np.int8)
+
+        Vdroite = G[I, X + 1, Y]
+        Vgauche = G[I, X - 1, Y]
+        Vhaut = G[I, X, Y + 1]
+        Vbas = G[I, X, Y - 1]
+
+        Vgauche = (Vgauche == 0) * 1
+        LPossibles[I, Indices] = Vgauche
+        Indices[(Vgauche == 1)] += 1
+
+        Vhaut = (Vhaut == 0) * 2
+        LPossibles[I, Indices] = Vhaut
+        Indices[(Vhaut == 2)] += 1
+
+        Vdroite = (Vdroite == 0) * 3
+        LPossibles[I, Indices] = Vdroite
+        Indices[(Vdroite == 3)] += 1
+
+        Vbas = (Vbas == 0) * 4
+        LPossibles[I, Indices] = Vbas
+        Indices[(Vbas == 4)] += 1
+        # marque le passage de la moto
+        G[I, X, Y] = 2
+
+        # Direction : 2 = vers le haut
+        # Choix = np.ones(nb,dtype=np.uint8) * 2
+        R = np.random.randint(12, size=nb)
+        Indices[Indices == 0] = 1
+        R = R % Indices
+
+        Choix = LPossibles[I, R]  # pour chaque partie je choisi une voie possible
+
+        # DEPLACEMENT
+
+        if (np.array_equal(Choix, np.zeros(nb, dtype=np.int8))):
+            return np.mean(S)
+        else:
+
+            DX = dx[Choix]
+            DY = dy[Choix]
+            X += DX
+            Y += DY
+            S += ds[Choix]
+"""
 #fonction qui lance les simulations pour trouver le meilleure score // retourne le score total
-def MonteCarlo (Game, nbSimulaions):
+def MonteCarlo (Game):
 
     total = 0
-    for i in range(nbSimulaions):
-        SimulGame = Game.copy()
-        total += SimulationPartie(SimulGame)
+    SimulGame = Game.copy()
+    total += SimulationPartie(SimulGame,5)
     return (total)
-
+"""
 #fonction qui détermine le coup à jouer // retourne le coup gagnant
 def nextStep(Game, listecoup):
     max = 0
@@ -157,7 +227,7 @@ def nextStep(Game, listecoup):
         Gametest = Game.copy()
         Gametest.PlayerX += elt[0]
         Gametest.PlayerY += elt[1]
-        sc = MonteCarlo(Gametest, 1000)
+        sc = SimulationPartie(Gametest,10000)
         if sc > max:
             max = sc
             stock = elt
@@ -233,7 +303,9 @@ CurrentGame = GameInit.copy()
 
 def Partie():
 
+    Tstart = time.time()
     PartieTermine = Play(CurrentGame)
+    print(time.time()-Tstart)
     
     if not PartieTermine :
         Affiche(CurrentGame)

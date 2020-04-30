@@ -93,21 +93,54 @@ def Simulate(Game):
         if Debug :print("Y : ",Y)
         if Debug :print("S : ",S)
 
+        LPossibles = np.zeros((nb, 4), dtype=np.int8)
+        Indices = np.zeros(nb, dtype=np.int8)
+
+        Vdroite = G[I, X + 1, Y]
+        Vgauche = G[I, X - 1, Y]
+        Vhaut = G[I, X, Y + 1]
+        Vbas = G[I, X, Y - 1]
+
+        Vgauche = (Vgauche == 0) * 1
+        LPossibles[I, Indices] = Vgauche
+        Indices[(Vgauche == 1)] += 1
+
+        Vhaut = (Vhaut == 0) * 2
+        LPossibles[I, Indices] = Vhaut
+        Indices[(Vhaut == 2)] += 1
+
+        Vdroite = (Vdroite == 0) * 3
+        LPossibles[I, Indices] = Vdroite
+        Indices[(Vdroite == 3)] += 1
+
+        Vbas = (Vbas == 0) * 4
+        LPossibles[I, Indices] = Vbas
+        Indices[(Vbas == 4)] += 1
         # marque le passage de la moto
         G[I, X, Y] = 2
 
 
         # Direction : 2 = vers le haut
-        Choix = np.ones(nb,dtype=np.uint8) * 2
+        #Choix = np.ones(nb,dtype=np.uint8) * 2
+        R = np.random.randint(12, size=nb)
+        Indices[Indices==0]=1
+        R = R%Indices
 
+        Choix = LPossibles[I,R] #pour chaque partie je choisi une voie possible
 
         #DEPLACEMENT
-        DX = dx[Choix]
-        DY = dy[Choix]
-        if Debug : print("DX : ", DX)
-        if Debug : print("DY : ", DY)
-        X += DX
-        Y += DY
+
+        if (np.array_equal(Choix,np.zeros(nb, dtype=np.int8))) :
+            return S
+        else:
+
+            DX = dx[Choix]
+            DY = dy[Choix]
+            if Debug : print("DX : ", DX)
+            if Debug : print("DY : ", DY)
+            X += DX
+            Y += DY
+            S += ds[Choix]
 
 
         #debug
